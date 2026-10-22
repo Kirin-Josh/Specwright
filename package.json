@@ -1,0 +1,20 @@
+{
+  "name": "specwright",
+  "private": true,
+  "workspaces": [
+    "apps/web"
+  ],
+  "scripts": {
+    "dev": "concurrently -n web,api -c cyan,magenta \"npm:dev:web\" \"npm:dev:api\"",
+    "dev:web": "npm run dev -w apps/web",
+    "dev:api": "uv run --directory apps/api fastapi dev app/main.py",
+    "build": "npm run build -w apps/web",
+    "lint": "npm run lint -w apps/web",
+    "test:api": "uv run --directory apps/api pytest",
+    "setup:api": "uv sync --directory apps/api",
+    "redis": "docker compose up -d redis"
+  },
+  "devDependencies": {
+    "concurrently": "^9.0.0"
+  }
+}
