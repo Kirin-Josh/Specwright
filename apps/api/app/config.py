@@ -4,10 +4,16 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 class Settings(BaseSettings):
     model_config = SettingsConfigDict(env_file=".env", extra="ignore")
 
+    # groq | openrouter | ollama | anthropic
+    llm_provider: str = "groq"
+    specwright_model_extract: str = "llama-3.3-70b-versatile"
+    specwright_model_plan: str = "llama-3.3-70b-versatile"
+    specwright_model_review: str = "llama-3.3-70b-versatile"
+
+    groq_api_key: str = ""
+    openrouter_api_key: str = ""
     anthropic_api_key: str = ""
-    specwright_model_extract: str = "claude-haiku-5-5"
-    specwright_model_plan: str = "claude-sonnet-5-5"
-    specwright_model_review: str = "claude-sonnet-5-5"
+    ollama_base_url: str = "http://localhost:11434/v1"
 
     appwrite_endpoint: str = "https://cloud.appwrite.io/v1"
     appwrite_project_id: str = ""
