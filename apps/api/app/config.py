@@ -6,9 +6,9 @@ class Settings(BaseSettings):
 
     # groq | openrouter | ollama | anthropic
     llm_provider: str = "groq"
-    specwright_model_extract: str = "llama-3.3-70b-versatile"
-    specwright_model_plan: str = "llama-3.3-70b-versatile"
-    specwright_model_review: str = "llama-3.3-70b-versatile"
+    specwright_model_extract: str = "openai/gpt-oss-120b"
+    specwright_model_plan: str = "openai/gpt-oss-120b"
+    specwright_model_review: str = "openai/gpt-oss-120b"
 
     groq_api_key: str = ""
     openrouter_api_key: str = ""
