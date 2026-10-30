@@ -4,7 +4,7 @@
 Next.js 16 (upload · review · push)
         │  REST + SSE (progress)
         ▼
-FastAPI ──► job runner (ARQ + Redis)
+FastAPI ──► background tasks (ARQ + Redis later, if runs need to outlive the API)
         │
         ├─ 1. Ingest      docx/pdf → markdown sections (tables included)
         ├─ 2. Extractor   → Requirement[]
@@ -13,7 +13,7 @@ FastAPI ──► job runner (ARQ + Redis)
         ├─ 5. Human review (web)
         └─ 6. Linear sync (GraphQL, idempotent)
         │
-Appwrite: auth, file storage, DB (specs, runs, plans, sync map)
+Runs: local files (RUN_STORE=local) or Appwrite Cloud (RUN_STORE=appwrite)
 ```
 
 ## Stages
@@ -34,8 +34,12 @@ Appwrite: auth, file storage, DB (specs, runs, plans, sync map)
 - **Output language** is a run option (`fr` / `en`), independent of the spec language.
 
 ## Data model
-- `Spec(id, owner, file_id, title, language)`
-- `Run(id, spec_id, stage, status, cost_usd, started_at, finished_at)`
-- `Requirement(id, run_id, req_id, text, type, section)`
-- `Plan(run_id, milestones[], tasks[])` — stored as JSON per revision
-- `SyncMap(run_id, task_id, linear_issue_id)`
+A run is its uploaded spec, its metadata and one JSON output per stage (`spec`, `requirements`,
+`outline`, `review`, `plan`, `linear` = the sync map). `app/runs.py` defines the `RunStore`
+interface and the local version; `app/appwrite_store.py` the Appwrite one:
+- bucket `specs`: the uploaded file, ID = run ID
+- table `runs`: `spec_title, language, spec_file, stage, message, created_at`, row ID = run ID
+- table `outputs`: `run_id, name, json` (JSON text), row ID = `<run id>.<stage>`
+
+Create them once with `uv run python -m app.appwrite_store` (safe to re-run).
+Auth (one owner per run) comes with the web sign-in.

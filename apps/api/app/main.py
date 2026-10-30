@@ -22,10 +22,23 @@ from pydantic import BaseModel
 from app.config import settings
 from app.linear import LinearClient, LinearError
 from app.pipeline.sync import Linear, SyncError, summarize, sync_plan
-from app.runs import SUFFIXES, RunMeta, RunStore, execute_run, review_of
+from app.runs import SUFFIXES, LocalRunStore, RunMeta, RunStore, execute_run, review_of
 from app.schemas import Issue, Plan, Requirement, SyncItem, SyncMap, SyncResult
 
-store = RunStore()
+
+def make_store() -> RunStore:
+    if settings.run_store == "appwrite":
+        from appwrite.services.storage import Storage
+        from appwrite.services.tables_db import TablesDB
+
+        from app.appwrite_store import AppwriteRunStore, client
+
+        c = client()
+        return AppwriteRunStore(TablesDB(c), Storage(c))
+    return LocalRunStore()
+
+
+store = make_store()
 
 
 def get_store() -> RunStore:

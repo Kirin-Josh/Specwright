@@ -5,9 +5,10 @@ import pytest
 from fastapi.testclient import TestClient
 
 from app import main, runs
+from app.appwrite_store import AppwriteRunStore
 from app.config import settings
 from app.pipeline.agents import Outline
-from app.runs import RunStore
+from app.runs import LocalRunStore, RunStore
 from app.schemas import (
     Label,
     Milestone,
@@ -19,6 +20,7 @@ from app.schemas import (
     SpecSection,
     Task,
 )
+from tests.fake_appwrite import FakeStorage, FakeTables
 from tests.test_sync import FakeLinear
 
 REQS = [Requirement(req_id="EF-01", text="Login", type=RequirementType.functional, section="s")]
@@ -29,8 +31,9 @@ PLAN = Plan(
 )
 
 
-@pytest.fixture
-def store(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Iterator[RunStore]:
+@pytest.fixture(params=["local", "appwrite"])
+def store(request: pytest.FixtureRequest, tmp_path: Path,
+          monkeypatch: pytest.MonkeyPatch) -> Iterator[RunStore]:
     calls: list[str] = []
     monkeypatch.setattr(runs, "ingest", lambda path: calls.append("ingest") or SpecDocument(
         title=path.stem, sections=[SpecSection(heading="h", markdown="m")]))
@@ -43,7 +46,8 @@ def store(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Iterator[RunStore]
 
     monkeypatch.setattr(runs, "build_plan", fake_build_plan)
     monkeypatch.setattr(settings, "linear_team_key", "ENG")
-    s = RunStore(tmp_path)
+    s: RunStore = (LocalRunStore(tmp_path) if request.param == "local" else
+                   AppwriteRunStore(FakeTables(), FakeStorage(), cache=tmp_path))  # type: ignore[arg-type]
     s.calls = calls  # type: ignore[attr-defined]
     main.app.dependency_overrides[main.get_store] = lambda: s
     main.app.dependency_overrides[main.get_linear] = FakeLinear

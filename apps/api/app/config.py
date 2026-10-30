@@ -19,6 +19,8 @@ class Settings(BaseSettings):
     anthropic_api_key: str = ""
     ollama_base_url: str = "http://localhost:11434/v1"
 
+    # Where runs are kept: local (folders under runs/) | appwrite
+    run_store: str = "local"
     appwrite_endpoint: str = "https://cloud.appwrite.io/v1"
     appwrite_project_id: str = ""
     appwrite_api_key: str = ""
