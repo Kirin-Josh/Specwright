@@ -68,7 +68,7 @@
     },
     {
       "name": "interface in French and English (unnumbered)",
-      "type": "technical",
+      "type": "functional",
       "match": [
         [
           "anglais",
