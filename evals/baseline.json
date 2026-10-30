@@ -58,34 +58,32 @@
       }
     },
     "stages-universite": {
-      "requirements": 16,
-      "recall": 0.941,
-      "missed": [
-        "interface in French and English (unnumbered)"
-      ],
+      "requirements": 17,
+      "recall": 1.0,
+      "missed": [],
       "extra": [],
       "scope_leaks": [],
       "wrong_type": [],
       "bad_ids": [],
       "duplicate_ids": [],
       "extract": {
-        "tokens": 3515,
+        "tokens": 3574,
         "cost_usd": 0.0003,
         "invalid_answers": 0,
-        "seconds": 33.9
+        "seconds": 29.1
       },
-      "milestones": 4,
-      "tasks": 28,
-      "points": 92,
+      "milestones": 3,
+      "tasks": 25,
+      "points": 103,
       "coverage": 1.0,
       "open_issues": 0,
       "duplicate_titles": 0,
       "english_titles": [],
       "plan": {
-        "tokens": 31824,
-        "cost_usd": 0.003,
+        "tokens": 21958,
+        "cost_usd": 0.0021,
         "invalid_answers": 0,
-        "seconds": 345.0
+        "seconds": 251.3
       }
     }
   }

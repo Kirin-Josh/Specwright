@@ -43,10 +43,13 @@ written out (expand ranges such as "EF-05 to EF-08"), e.g. "Covers: EF-03, EF-05
 Return an empty list if this part of the spec contains no requirements."""
 
 NUMBERED = (
-    "This spec numbers its requirements (ID prefixes: {prefixes}), so everything the product "
-    "must do already has an ID. Unnumbered text is context, a definition or a detail of a "
-    "numbered requirement: skip it. Expect few or no REQ-### items; add one (REQ-001, REQ-002, …) "
-    "only for an explicit obligation on the new product that no numbered requirement covers."
+    "This spec numbers its requirements (ID prefixes: {prefixes}). Unnumbered text is usually "
+    "context, a definition or a detail of a numbered requirement: skip it. The exception is a "
+    "sentence that obliges the new product to do or be something (\"must\", \"shall\", \"doit\", "
+    "\"doivent\", \"est requis\", \"il faut\") that no numbered requirement covers, for example a "
+    "constraint in a section such as \"Other constraints\" or \"Autres contraintes\": add it as "
+    "REQ-001, REQ-002, … with the type of what it constrains. Rule 2 still applies: background, "
+    "how things work today, objectives, plans and out-of-scope items are never requirements."
 )
 UNNUMBERED = (
     "This spec does not number its requirements: give each requirement an ID REQ-001, REQ-002, …"
