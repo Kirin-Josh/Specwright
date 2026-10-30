@@ -25,6 +25,7 @@ class Settings(BaseSettings):
 
     redis_url: str = "redis://localhost:6379"
     linear_api_key: str = ""
+    linear_team_key: str = ""  # team the web app pushes plans to, e.g. ENG
     web_origin: str = "http://localhost:3000"
 
 
