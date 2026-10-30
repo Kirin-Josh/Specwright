@@ -43,8 +43,45 @@ def run_checks(plan: Plan, requirements: list[Requirement]) -> ReviewReport:
 
     if cycle := find_cycle(plan):
         issues.append(Issue(kind="cycle", detail=" -> ".join(cycle), task_ids=cycle))
+    issues += dependency_issues(plan)
 
     return ReviewReport(issues=issues)
+
+
+def dependency_issues(plan: Plan) -> list[Issue]:
+    """A QA task needs something to test; a FE task needs the BE task of its own milestone that
+    serves the same requirement (directly or through other dependencies)."""
+    issues: list[Issue] = []
+    graph = {t.id: t.depends_on for t in plan.tasks}
+    for t in plan.tasks:
+        if t.label == Label.QA and not t.depends_on:
+            issues.append(Issue(
+                kind="dependency", task_ids=[t.id],
+                detail="QA task depends on nothing; add the tasks it verifies to depends_on",
+            ))
+        if t.label != Label.FE:
+            continue
+        backends = sorted(b.id for b in plan.tasks if b.label == Label.BE
+                          and b.milestone_id == t.milestone_id
+                          and set(b.requirement_ids) & set(t.requirement_ids))
+        if backends and not set(backends) & ancestors(graph, t.id):
+            issues.append(Issue(
+                kind="dependency", task_ids=[t.id],
+                detail=f"FE task doesn't depend on {', '.join(backends)}, the BE work for the "
+                       "same requirement; add the one it calls to depends_on",
+            ))
+    return issues
+
+
+def ancestors(graph: dict[str, list[str]], node: str) -> set[str]:
+    seen: set[str] = set()
+    todo = list(graph.get(node, []))
+    while todo:
+        d = todo.pop()
+        if d not in seen:
+            seen.add(d)
+            todo += graph.get(d, [])
+    return seen
 
 
 def find_cycle(plan: Plan) -> list[str] | None:

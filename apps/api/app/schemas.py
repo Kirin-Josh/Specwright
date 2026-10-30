@@ -58,7 +58,7 @@ class Plan(BaseModel):
 
 
 class Issue(BaseModel):
-    kind: str = Field(description="uncovered | orphan | cycle | estimate | duplicate | vague")
+    kind: str = Field(description="uncovered | orphan | cycle | dependency | estimate | duplicate | vague")
     detail: str
     task_ids: list[str] = []
     requirement_ids: list[str] = []
