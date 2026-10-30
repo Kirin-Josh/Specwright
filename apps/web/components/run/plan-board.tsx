@@ -1,3 +1,6 @@
+"use client";
+
+import { useState } from "react";
 import type { Plan } from "@/lib/types";
 import { TaskCard } from "./task-card";
 
@@ -6,6 +9,7 @@ interface Props {
   flaggedTaskIds: Set<string>;
   onEditTask: (id: string) => void;
   onAddTask: (milestoneId: string) => void;
+  onMoveTask: (id: string, milestoneId: string) => void;
 }
 
 export function PlanBoard({
@@ -13,7 +17,11 @@ export function PlanBoard({
   flaggedTaskIds,
   onEditTask,
   onAddTask,
+  onMoveTask,
 }: Props) {
+  // The milestone a task is being dragged over, to highlight the drop target.
+  const [dropTarget, setDropTarget] = useState<string | null>(null);
+
   return (
     <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
       {plan.milestones.map((m) => {
@@ -22,7 +30,24 @@ export function PlanBoard({
         return (
           <section
             key={m.id}
-            className="rounded-xl bg-zinc-100 p-3 dark:bg-zinc-900/60"
+            onDragOver={(e) => {
+              e.preventDefault(); // allows dropping here
+              setDropTarget(m.id);
+            }}
+            onDragLeave={(e) => {
+              if (!e.currentTarget.contains(e.relatedTarget as Node)) {
+                setDropTarget(null);
+              }
+            }}
+            onDrop={(e) => {
+              e.preventDefault();
+              setDropTarget(null);
+              const id = e.dataTransfer.getData("text/plain");
+              if (id) onMoveTask(id, m.id);
+            }}
+            className={`rounded-xl bg-zinc-100 p-3 ring-2 transition dark:bg-zinc-900/60 ${
+              dropTarget === m.id ? "ring-indigo-400" : "ring-transparent"
+            }`}
           >
             <header className="mb-3 px-1">
               <div className="flex items-baseline gap-2">

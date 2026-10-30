@@ -9,8 +9,9 @@ import {
   subscribeToRun,
 } from "@/lib/api";
 import { checkPlan } from "@/lib/checks";
-import { emptyPlan, planReducer } from "@/lib/plan-reducer";
+import { emptyPlan, nextTaskId, planReducer } from "@/lib/plan-reducer";
 import type { Plan, Run } from "@/lib/types";
+import { CoverageMatrix } from "./coverage-matrix";
 import { IssuesList } from "./issues-list";
 import { PlanBoard } from "./plan-board";
 import { RequirementsTable } from "./requirements-table";
@@ -18,7 +19,7 @@ import { StageStepper } from "./stage-stepper";
 import { SyncDialog } from "./sync-dialog";
 import { TaskEditor } from "./task-editor";
 
-type Tab = "plan" | "requirements" | "issues";
+type Tab = "plan" | "requirements" | "coverage" | "issues";
 
 export function RunView({ runId }: { runId: string }) {
   const [run, setRun] = useState<Run | null>(null);
@@ -65,12 +66,14 @@ export function RunView({ runId }: { runId: string }) {
   }, [runId, attempt]);
 
   // 2. Re-check the plan on every edit. Server-only issues (dependency, duplicate, vague) are
-  // kept as-is until the next run.
+  // kept until the next run, unless a task they name was deleted or merged away.
   const issues = useMemo(() => {
     if (!run) return [];
+    const taskIds = new Set(plan.tasks.map((t) => t.id));
     const llmIssues = run.issues.filter(
       (i) =>
-        i.kind === "dependency" || i.kind === "duplicate" || i.kind === "vague",
+        (i.kind === "dependency" || i.kind === "duplicate" || i.kind === "vague") &&
+        i.task_ids.every((id) => taskIds.has(id)),
     );
     return [...checkPlan(plan, run.requirements), ...llmIssues];
   }, [plan, run]);
@@ -81,6 +84,15 @@ export function RunView({ runId }: { runId: string }) {
   );
   const dirty = plan !== savedPlan;
   const editingTask = plan.tasks.find((t) => t.id === editingId);
+
+  function toggleCoverage(taskId: string, reqId: string) {
+    const task = plan.tasks.find((t) => t.id === taskId);
+    if (!task) return;
+    const requirement_ids = task.requirement_ids.includes(reqId)
+      ? task.requirement_ids.filter((r) => r !== reqId)
+      : [...task.requirement_ids, reqId];
+    dispatch({ type: "update_task", task: { ...task, requirement_ids } });
+  }
 
   async function handleRetry() {
     try {
@@ -131,6 +143,7 @@ export function RunView({ runId }: { runId: string }) {
               [
                 ["plan", `Plan (${plan.tasks.length})`],
                 ["requirements", `Requirements (${run.requirements.length})`],
+                ["coverage", "Coverage"],
                 ["issues", `Issues (${issues.length})`],
               ] as const
             ).map(([key, label]) => (
@@ -157,12 +170,23 @@ export function RunView({ runId }: { runId: string }) {
               onAddTask={(milestoneId) =>
                 dispatch({ type: "add_task", milestoneId })
               }
+              onMoveTask={(id, milestoneId) =>
+                dispatch({ type: "move_task", id, milestoneId })
+              }
             />
           )}
           {tab === "requirements" && (
             <RequirementsTable
               requirements={run.requirements}
               plan={plan}
+              onEditTask={setEditingId}
+            />
+          )}
+          {tab === "coverage" && (
+            <CoverageMatrix
+              requirements={run.requirements}
+              plan={plan}
+              onToggle={toggleCoverage}
               onEditTask={setEditingId}
             />
           )}
@@ -201,6 +225,7 @@ export function RunView({ runId }: { runId: string }) {
         <TaskEditor
           key={editingTask.id}
           task={editingTask}
+          tasks={plan.tasks}
           milestones={plan.milestones}
           requirements={run.requirements}
           onSave={(task) => {
@@ -209,6 +234,17 @@ export function RunView({ runId }: { runId: string }) {
           }}
           onDelete={(id) => {
             dispatch({ type: "delete_task", id });
+            setEditingId(null);
+          }}
+          onSplit={(task) => {
+            dispatch({ type: "update_task", task });
+            dispatch({ type: "split_task", id: task.id });
+            // Open the new second part so it can be renamed right away.
+            setEditingId(nextTaskId(plan.tasks));
+          }}
+          onMerge={(task, removeId) => {
+            dispatch({ type: "update_task", task });
+            dispatch({ type: "merge_tasks", keepId: task.id, removeId });
             setEditingId(null);
           }}
           onClose={() => setEditingId(null)}
