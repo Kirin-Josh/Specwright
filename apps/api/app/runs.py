@@ -1,14 +1,17 @@
-"""Local run storage and the stage runner (until Appwrite + ARQ are wired in).
+"""Run storage and the stage runner.
 
-Each run is a folder runs/<run id>/ holding the uploaded spec, run.json (stage and progress),
-and one JSON file per stage output. A stage whose output already exists is skipped, so a run
-interrupted by a crash or a server restart resumes from where it stopped.
+A run has its uploaded spec, its metadata (stage and progress) and one JSON output per stage.
+A stage whose output already exists is skipped, so a run interrupted by a crash or a server
+restart resumes from where it stopped. `LocalRunStore` keeps runs in folders under runs/;
+`AppwriteRunStore` (app/appwrite_store.py) keeps them in Appwrite. RUN_STORE picks one.
 """
 
 import logging
 import re
 import secrets
 import threading
+from abc import ABC, abstractmethod
+from collections.abc import Iterable
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
@@ -39,7 +42,49 @@ class RunMeta(BaseModel):
     created_at: datetime
 
 
-class RunStore:
+def new_run(file_name: str, language: str) -> RunMeta:
+    return RunMeta(id=f"run_{secrets.token_hex(6)}", spec_title=Path(file_name).stem,
+                   language=language, spec_file=f"spec{Path(file_name).suffix.lower()}",
+                   created_at=datetime.now(UTC))
+
+
+class RunStore(ABC):
+    @abstractmethod
+    def create(self, file_name: str, data: bytes, language: str) -> RunMeta: ...
+
+    @abstractmethod
+    def get(self, run_id: str) -> RunMeta | None: ...
+
+    @abstractmethod
+    def write_meta(self, meta: RunMeta) -> None: ...
+
+    @abstractmethod
+    def spec_path(self, meta: RunMeta) -> Path:
+        """A local copy of the uploaded spec, for ingest."""
+
+    @abstractmethod
+    def save(self, run_id: str, name: str, value: Any) -> None: ...
+
+    @abstractmethod
+    def load[T](self, run_id: str, name: str, tp: type[T]) -> T | None: ...
+
+    @abstractmethod
+    def active_runs(self) -> Iterable[RunMeta]:
+        """Runs whose stage is one of ACTIVE_STAGES."""
+
+    def update(self, meta: RunMeta, **changes: Any) -> None:
+        for key, value in changes.items():
+            setattr(meta, key, value)
+        self.write_meta(meta)
+
+    def mark_interrupted(self) -> None:
+        """Runs left mid-stage by a server restart have no worker any more."""
+        for meta in list(self.active_runs()):
+            self.update(meta, stage="failed",
+                        message="Interrupted by a server restart; retry to resume.")
+
+
+class LocalRunStore(RunStore):
     def __init__(self, root: Path = RUNS_DIR):
         self.root = root
         # run.json is written by the pipeline thread and read by the progress stream.
@@ -49,12 +94,9 @@ class RunStore:
         return self.root / run_id
 
     def create(self, file_name: str, data: bytes, language: str) -> RunMeta:
-        suffix = Path(file_name).suffix.lower()
-        run_id = f"run_{secrets.token_hex(6)}"
-        self._dir(run_id).mkdir(parents=True)
-        (self._dir(run_id) / f"spec{suffix}").write_bytes(data)
-        meta = RunMeta(id=run_id, spec_title=Path(file_name).stem, language=language,
-                       spec_file=f"spec{suffix}", created_at=datetime.now(UTC))
+        meta = new_run(file_name, language)
+        self._dir(meta.id).mkdir(parents=True)
+        (self._dir(meta.id) / meta.spec_file).write_bytes(data)
         self.write_meta(meta)
         return meta
 
@@ -70,11 +112,6 @@ class RunStore:
             (self._dir(meta.id) / "run.json").write_text(meta.model_dump_json(indent=2),
                                                          encoding="utf-8")
 
-    def update(self, meta: RunMeta, **changes: Any) -> None:
-        for key, value in changes.items():
-            setattr(meta, key, value)
-        self.write_meta(meta)
-
     def spec_path(self, meta: RunMeta) -> Path:
         return self._dir(meta.id) / meta.spec_file
 
@@ -87,15 +124,13 @@ class RunStore:
             return None
         return TypeAdapter(tp).validate_json(path.read_bytes())
 
-    def mark_interrupted(self) -> None:
-        """Runs left mid-stage by a server restart have no worker any more."""
+    def active_runs(self) -> Iterable[RunMeta]:
         if not self.root.exists():
             return
         for folder in self.root.iterdir():
             meta = self.get(folder.name)
             if meta and meta.stage in ACTIVE_STAGES:
-                self.update(meta, stage="failed",
-                            message="Interrupted by a server restart; retry to resume.")
+                yield meta
 
 
 def execute_run(store: RunStore, run_id: str) -> None:
