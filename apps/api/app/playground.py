@@ -1,4 +1,5 @@
 # Run from apps/api as a module so `app` is importable: python -m app.playground
+import io
 import sys
 
 from openai import OpenAI
@@ -6,7 +7,8 @@ from openai import OpenAI
 from app.config import settings
 
 # Windows consoles default to cp1252, which can't print some characters models emit.
-sys.stdout.reconfigure(encoding="utf-8")
+if isinstance(sys.stdout, io.TextIOWrapper):
+    sys.stdout.reconfigure(encoding="utf-8")
 
 # Groq exposes an OpenAI-compatible API, so the OpenAI SDK works with Groq's base URL.
 client = OpenAI(base_url="https://api.groq.com/openai/v1", api_key=settings.groq_api_key)

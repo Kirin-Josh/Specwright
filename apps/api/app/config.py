@@ -9,6 +9,10 @@ class Settings(BaseSettings):
     specwright_model_extract: str = "openai/gpt-oss-120b"
     specwright_model_plan: str = "openai/gpt-oss-120b"
     specwright_model_review: str = "openai/gpt-oss-120b"
+    # Extract in chunks of ~N characters of whole sections; 0 sends the whole spec in one call.
+    specwright_extract_chunk_chars: int = 0
+    # Max prompt + output tokens per request; output is capped to fit. 0 = no limit.
+    specwright_request_token_limit: int = 0
 
     groq_api_key: str = ""
     openrouter_api_key: str = ""
