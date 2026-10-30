@@ -16,6 +16,7 @@ All from the repo root (npm workspaces):
 - Run both: `npm run dev` (web on 3000, api on 8000)
 - One side: `npm run dev:web` / `npm run dev:api`
 - API tests: `npm run test:api`
+- Evals: `npm run evals` (prompt scores vs `evals/baseline.json`; see `evals/README.md`)
 - Add a web dependency: `npm install <pkg> -w apps/web`
 
 ## Rules

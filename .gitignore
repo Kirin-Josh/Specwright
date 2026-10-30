@@ -11,3 +11,4 @@ __pycache__/
 
 LEARNERS.md
 apps/api/runs/
+evals/results/
