@@ -25,7 +25,9 @@ are only marked ▲/▼ when they move more than 20%.
   - `requirements`: each with its `type` and either the spec's `req_id`, or `match` keyword
     groups for specs without IDs (every group needs one hit in the requirement text)
   - `out_of_scope` IDs or `out_of_scope_match` keyword groups that must not be extracted
-- `baseline.json` — scores the table compares against (▲ better, ▼ worse)
+  - `language` (optional, default `en`): the language the plan is written in
+- `baseline.json` — scores the table compares against (▲ better, ▼ worse). `--save-baseline`
+  replaces only the specs that ran.
 - `results/` — latest outputs per spec, for inspection (not committed)
 
 ## Specs
@@ -33,6 +35,7 @@ are only marked ▲/▼ when they move more than 20%.
 |---|---|
 | `room-booking` | 18 numbered requirements (FR/SEC/TECH/AC) in tables and lists, cross-references, an out-of-scope section with IDs |
 | `expense-tracker` | 15 requirements in prose with no IDs (REQ-### must be generated), "later, not now" ideas that must not leak |
+| `stages-universite` | French; functional IDs only in a table (EF), lists (ES/ET/CA), an ID range to expand ("EF-01 à EF-05"), one unnumbered obligation (REQ-###), "actuellement" context and a "hors périmètre" section without IDs; planned in French (`"language": "fr"` in its gold file) |
 
 ## Metrics
 | column | meaning |
@@ -45,4 +48,5 @@ are only marked ▲/▼ when they move more than 20%.
 | tasks / coverage | plan size; share of extracted requirements cited by at least one task |
 | open issues | review issues left after the fix loop |
 | dup titles | tasks sharing a title with another task |
+| EN titles | French plans only: task titles that look English (a short word list; loanwords like "upload" are fine) |
 | tokens / cost $ / time s | both stages; cost only when the provider reports it (OpenRouter) |

@@ -10,6 +10,10 @@ from typing import Any
 from app.schemas import Plan, Requirement, ReviewReport
 
 GENERATED_ID = re.compile(r"^REQ-\d{3}$")
+# Words that mark a task title as English; none is also a French word or a loanword French
+# developers use ("upload", "email" are).
+ENGLISH = re.compile(r"\b(the|and|with|for|from|create|add|implement|build|set ?up|"
+                     r"users?|requests?|deploy)\b")
 
 
 def matches(text: str, groups: list[list[str]]) -> bool:
@@ -72,7 +76,12 @@ def normalize(title: str) -> str:
     return re.sub(r"[^\w]+", " ", title.lower()).strip()
 
 
-def score_plan(plan: Plan, review: ReviewReport, reqs: list[Requirement]) -> dict[str, Any]:
+def english_titles(plan: Plan) -> list[str]:
+    return [t.id for t in plan.tasks if ENGLISH.search(t.title.lower())]
+
+
+def score_plan(plan: Plan, review: ReviewReport, reqs: list[Requirement],
+               language: str = "en") -> dict[str, Any]:
     cited = {rid for t in plan.tasks for rid in t.requirement_ids}
     titles = [normalize(t.title) for t in plan.tasks]
     return {
@@ -82,4 +91,6 @@ def score_plan(plan: Plan, review: ReviewReport, reqs: list[Requirement]) -> dic
         "coverage": round(len(cited & {r.req_id for r in reqs}) / len(reqs), 3) if reqs else 0,
         "open_issues": len(review.issues),
         "duplicate_titles": sum(titles.count(t) > 1 for t in titles),
+        # Only checked for French plans: task IDs whose title looks English.
+        "english_titles": english_titles(plan) if language == "fr" else None,
     }

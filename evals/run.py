@@ -49,6 +49,7 @@ COLUMNS = [  # (key, header, higher is better)
     ("coverage", "coverage", True),
     ("open_issues", "open issues", False),
     ("duplicate_titles", "dup titles", False),
+    ("english_titles", "EN titles", False),
     ("tokens", "tokens", False),
     ("cost_usd", "cost $", False),
     ("seconds", "time s", False),
@@ -85,12 +86,13 @@ def run_spec(gold_path: Path, stage: str) -> dict[str, Any]:
     if stage == "extract":
         return scores
 
-    print(f"{name}: planning {len(reqs)} requirements…", flush=True)
+    language = gold.get("language", "en")
+    print(f"{name}: planning {len(reqs)} requirements in {language}…", flush=True)
     (_, plan, review), cost = measure(
-        lambda: build_plan(reqs, "en", log=lambda msg: print(f"  {msg}", flush=True)))
+        lambda: build_plan(reqs, language, log=lambda msg: print(f"  {msg}", flush=True)))
     (out / "plan.json").write_text(plan.model_dump_json(indent=2), encoding="utf-8")
     (out / "review.json").write_text(review.model_dump_json(indent=2), encoding="utf-8")
-    return {**scores, **score_plan(plan, review, reqs), "plan": cost}
+    return {**scores, **score_plan(plan, review, reqs, language), "plan": cost}
 
 
 USAGE = ("tokens", "cost_usd", "seconds")
@@ -137,7 +139,8 @@ def table(results: dict[str, Any], baseline: dict[str, Any]) -> str:
 def details(results: dict[str, Any]) -> str:
     lines = []
     for name, s in results.items():
-        for key in ("missed", "extra", "scope_leaks", "wrong_type", "bad_ids", "duplicate_ids"):
+        for key in ("missed", "extra", "scope_leaks", "wrong_type", "bad_ids", "duplicate_ids",
+                    "english_titles"):
             if s.get(key):
                 lines.append(f"- {name} {key}: {', '.join(s[key])}")
         invalid = sum(s.get(st, {}).get("invalid_answers", 0) for st in ("extract", "plan"))
@@ -170,8 +173,9 @@ def main() -> None:
     (RESULTS / "latest.json").write_text(json.dumps({"model": model, "results": results},
                                                     indent=2), encoding="utf-8")
     if args.save_baseline:
-        BASELINE.write_text(json.dumps({"model": model, "results": results}, indent=2) + "\n",
-                            encoding="utf-8")
+        # Replace only the specs that ran, so `--spec X --save-baseline` keeps the others.
+        BASELINE.write_text(json.dumps({"model": model, "results": {**baseline, **results}},
+                                       indent=2) + "\n", encoding="utf-8")
         print(f"\nsaved baseline: {BASELINE}")
 
 

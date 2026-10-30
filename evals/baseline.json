@@ -56,6 +56,37 @@
         "invalid_answers": 1,
         "seconds": 291.7
       }
+    },
+    "stages-universite": {
+      "requirements": 16,
+      "recall": 0.941,
+      "missed": [
+        "interface in French and English (unnumbered)"
+      ],
+      "extra": [],
+      "scope_leaks": [],
+      "wrong_type": [],
+      "bad_ids": [],
+      "duplicate_ids": [],
+      "extract": {
+        "tokens": 3515,
+        "cost_usd": 0.0003,
+        "invalid_answers": 0,
+        "seconds": 33.9
+      },
+      "milestones": 4,
+      "tasks": 28,
+      "points": 92,
+      "coverage": 1.0,
+      "open_issues": 0,
+      "duplicate_titles": 0,
+      "english_titles": [],
+      "plan": {
+        "tokens": 31824,
+        "cost_usd": 0.003,
+        "invalid_answers": 0,
+        "seconds": 345.0
+      }
     }
   }
 }

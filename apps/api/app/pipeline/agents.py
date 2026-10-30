@@ -56,10 +56,11 @@ UNNUMBERED = (
 def spec_id_prefixes(doc: SpecDocument) -> list[str]:
     """Prefixes the spec uses for its own requirement IDs, e.g. ['CA', 'EF', 'ES'].
 
-    Only IDs that open a heading or a line count, so references like "UT-CDC-SAAS-001" don't.
+    Only IDs that open a heading, a line or a table row count, so references like
+    "UT-CDC-SAAS-001" don't.
     """
     text = "\n".join(f"{s.heading}\n{s.markdown}" for s in doc.sections)
-    counts = Counter(re.findall(r"^[-*\s]*([A-Z]{2,4})-\d{2,3}\b", text, re.MULTILINE))
+    counts = Counter(re.findall(r"^[-*|\s]*([A-Z]{2,4})-\d{2,3}\b", text, re.MULTILINE))
     return sorted(p for p, n in counts.items() if n >= 2 and p != "REQ")
 
 
