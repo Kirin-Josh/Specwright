@@ -1,7 +1,13 @@
 "use client";
 
 import { useEffect, useMemo, useReducer, useState } from "react";
-import { getRun, getRunResults, savePlan, subscribeToRun } from "@/lib/api";
+import {
+  getRun,
+  getRunResults,
+  retryRun,
+  savePlan,
+  subscribeToRun,
+} from "@/lib/api";
 import { checkPlan } from "@/lib/checks";
 import { emptyPlan, planReducer } from "@/lib/plan-reducer";
 import type { Plan, Run } from "@/lib/types";
@@ -22,6 +28,8 @@ export function RunView({ runId }: { runId: string }) {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [syncOpen, setSyncOpen] = useState(false);
   const [saving, setSaving] = useState(false);
+  // Bumped by Retry to reload the run and listen again.
+  const [attempt, setAttempt] = useState(0);
   const [error, setError] = useState<string | null>(null);
 
   // 1. Load the run, then listen for stage updates until it is reviewed.
@@ -34,7 +42,9 @@ export function RunView({ runId }: { runId: string }) {
         if (cancelled) return;
         setRun(initial);
         unsubscribe = subscribeToRun(runId, async (event) => {
-          setRun((r) => (r ? { ...r, stage: event.stage } : r));
+          setRun((r) =>
+            r ? { ...r, stage: event.stage, message: event.message ?? "" } : r,
+          );
           if (event.stage === "reviewed") {
             const results = await getRunResults(runId);
             if (cancelled) return;
@@ -52,13 +62,15 @@ export function RunView({ runId }: { runId: string }) {
       cancelled = true;
       unsubscribe();
     };
-  }, [runId]);
+  }, [runId, attempt]);
 
-  // 2. Re-check the plan on every edit. Server-only issues (duplicate, vague) are kept as-is.
+  // 2. Re-check the plan on every edit. Server-only issues (dependency, duplicate, vague) are
+  // kept as-is until the next run.
   const issues = useMemo(() => {
     if (!run) return [];
     const llmIssues = run.issues.filter(
-      (i) => i.kind === "duplicate" || i.kind === "vague",
+      (i) =>
+        i.kind === "dependency" || i.kind === "duplicate" || i.kind === "vague",
     );
     return [...checkPlan(plan, run.requirements), ...llmIssues];
   }, [plan, run]);
@@ -69,6 +81,15 @@ export function RunView({ runId }: { runId: string }) {
   );
   const dirty = plan !== savedPlan;
   const editingTask = plan.tasks.find((t) => t.id === editingId);
+
+  async function handleRetry() {
+    try {
+      await retryRun(runId);
+      setAttempt((n) => n + 1);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Retry failed");
+    }
+  }
 
   async function handleSave() {
     setSaving(true);
@@ -96,7 +117,11 @@ export function RunView({ runId }: { runId: string }) {
             {run.spec_title}
           </h1>
         </div>
-        <StageStepper stage={run.stage} />
+        <StageStepper
+          stage={run.stage}
+          message={run.message}
+          onRetry={handleRetry}
+        />
       </header>
 
       {ready && (

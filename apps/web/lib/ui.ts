@@ -10,6 +10,7 @@ export const issueLabels: Record<IssueKind, string> = {
   uncovered: "Uncovered requirement",
   orphan: "Broken reference",
   cycle: "Dependency cycle",
+  dependency: "Missing dependency",
   estimate: "Estimate out of range",
   duplicate: "Possible duplicate",
   vague: "Too vague",

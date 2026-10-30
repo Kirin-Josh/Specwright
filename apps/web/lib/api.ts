@@ -20,6 +20,7 @@ const wait = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
   const res = await fetch(`${API_URL}${path}`, init);
   if (!res.ok) throw new Error(`${res.status} ${await res.text()}`);
+  if (res.status === 204) return undefined as T; // e.g. saving the plan
   return res.json() as Promise<T>;
 }
 
@@ -45,6 +46,7 @@ export async function getRun(id: string): Promise<Run> {
       spec_title: "Room booking app — spec v1",
       language: "en",
       stage: "ingesting",
+      message: "",
       requirements: [],
       plan: null,
       issues: [],
@@ -53,7 +55,16 @@ export async function getRun(id: string): Promise<Run> {
   return request(`/runs/${id}`);
 }
 
-/** Streams stage updates. Returns a function that stops listening. */
+/** Resumes a failed run from its first unfinished stage. */
+export async function retryRun(id: string): Promise<void> {
+  if (USE_MOCK) {
+    await wait(300);
+    return;
+  }
+  await request(`/runs/${id}/retry`, { method: "POST" });
+}
+
+/** Streams stage updates until the run ends. Returns a function that stops listening. */
 export function subscribeToRun(
   id: string,
   onEvent: (event: RunEvent) => void,
@@ -66,7 +77,12 @@ export function subscribeToRun(
     return () => timers.forEach(clearTimeout);
   }
   const source = new EventSource(`${API_URL}/runs/${id}/events`);
-  source.onmessage = (e) => onEvent(JSON.parse(e.data) as RunEvent);
+  source.onmessage = (e) => {
+    const event = JSON.parse(e.data) as RunEvent;
+    // The server closes the stream when the run ends; without this, EventSource reconnects.
+    if (event.stage === "reviewed" || event.stage === "failed") source.close();
+    onEvent(event);
+  };
   return () => source.close();
 }
 
@@ -103,24 +119,22 @@ export async function previewSync(id: string, plan: Plan): Promise<SyncItem[]> {
     await wait(500);
     const labels = [...new Set(plan.tasks.map((t) => t.label))];
     return [
-      ...labels.map(
-        (l): SyncItem => ({ kind: "label", title: l, action: "create" }),
-      ),
+      ...labels.map((l): SyncItem => ({
+        kind: "label",
+        title: l,
+        action: "create",
+      })),
       { kind: "project", title: "Room booking app", action: "create" },
-      ...plan.milestones.map(
-        (m): SyncItem => ({
-          kind: "milestone",
-          title: m.name,
-          action: "create",
-        }),
-      ),
-      ...plan.tasks.map(
-        (t): SyncItem => ({
-          kind: "issue",
-          title: `[${t.label}] ${t.title}`,
-          action: "create",
-        }),
-      ),
+      ...plan.milestones.map((m): SyncItem => ({
+        kind: "milestone",
+        title: m.name,
+        action: "create",
+      })),
+      ...plan.tasks.map((t): SyncItem => ({
+        kind: "issue",
+        title: `[${t.label}] ${t.title}`,
+        action: "create",
+      })),
     ];
   }
   return request(`/runs/${id}/sync/preview`, { method: "POST" });
