@@ -2,6 +2,7 @@
 
     python -m app.cli extract path/to/spec.pdf
     python -m app.cli plan path/to/spec.pdf      # reuses runs/<spec-name>/requirements.json
+    python -m app.cli sync path/to/spec.pdf --team ENG [--dry-run]   # pushes plan.json to Linear
 
 Each stage writes its output to runs/<spec-name>/ so it can be inspected or re-used.
 """
@@ -14,10 +15,12 @@ import time
 from pathlib import Path
 
 from app.config import settings
+from app.linear import LinearClient
 from app.pipeline import agents
 from app.pipeline.ingest import ingest, to_prompt_text
 from app.pipeline.orchestrator import build_plan
-from app.schemas import Requirement, SpecDocument
+from app.pipeline.sync import summarize, sync_plan
+from app.schemas import Plan, Requirement, SpecDocument, SyncMap
 
 RUNS_DIR = Path("runs")
 
@@ -86,6 +89,32 @@ def cmd_plan(args: argparse.Namespace) -> None:
     print(f"saved: {out / 'plan.json'}")
 
 
+def cmd_sync(args: argparse.Namespace) -> None:
+    out = RUNS_DIR / Path(args.file).stem
+    plan_file, map_file = out / "plan.json", out / "linear.json"
+    if not plan_file.exists():
+        sys.exit(f"{plan_file} not found; run `plan` first")
+    plan = Plan.model_validate_json(plan_file.read_text(encoding="utf-8"))
+    rows = json.loads((out / "requirements.json").read_text(encoding="utf-8"))
+    requirements = [Requirement.model_validate(row) for row in rows]
+    sync_map = (SyncMap.model_validate_json(map_file.read_text(encoding="utf-8"))
+                if map_file.exists() else SyncMap())
+    title = args.title or SpecDocument.model_validate_json(
+        (out / "spec.json").read_text(encoding="utf-8")).title
+
+    def save(m: SyncMap) -> None:
+        map_file.write_text(m.model_dump_json(indent=2), encoding="utf-8")
+
+    items = sync_plan(plan, requirements, title, args.team, LinearClient(settings.linear_api_key),
+                      sync_map, save, dry_run=args.dry_run)
+    for i in items:
+        print(f"  {i.action:<6} {i.kind:<9} {i.title}")
+    result = summarize(items, sync_map)
+    verb = "would create" if args.dry_run else "created"
+    print(f"\nsync: {verb} {result.created}, updated {result.updated}"
+          + ("" if args.dry_run else f" — {result.project_url}"))
+
+
 def main() -> None:
     # Windows consoles default to cp1252, which can't print some characters models emit.
     # Line buffering shows progress live even when output is redirected to a file.
@@ -104,6 +133,13 @@ def main() -> None:
     plan.add_argument("file")
     plan.add_argument("--language", default="en", help="language of titles and descriptions")
     plan.set_defaults(func=cmd_plan)
+
+    sync = sub.add_parser("sync", help="push the saved plan to Linear (idempotent)")
+    sync.add_argument("file")
+    sync.add_argument("--team", required=True, help="Linear team key, e.g. ENG")
+    sync.add_argument("--title", help="project name (default: the spec's title)")
+    sync.add_argument("--dry-run", action="store_true", help="list changes without writing")
+    sync.set_defaults(func=cmd_sync)
 
     args = parser.parse_args()
     args.func(args)
