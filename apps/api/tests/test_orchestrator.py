@@ -70,6 +70,14 @@ def test_acceptance_criterion_is_moved_after_what_it_verifies(monkeypatch):
     assert [m.requirement_ids for m in result.milestones] == [["EF-01"], ["EF-02", "CA-01"]]
 
 
+def test_foreign_requirements_are_stripped_and_emptied_tasks_dropped():
+    tasks = [task("T1", ["A", "B"]), task("T2", ["B"]), task("T3", ["A"], ["T1", "T2"])]
+    kept = orchestrator.drop_foreign(milestone("M1", ["A"]), tasks, lambda _: None)
+    assert [(t.id, t.requirement_ids, t.depends_on) for t in kept] == [
+        ("T1", ["A"], []), ("T3", ["A"], ["T1"]),
+    ]
+
+
 def test_tasks_citing_another_milestones_requirement_are_flagged():
     outline = Outline(milestones=[milestone("M1", ["A"]), milestone("M2", ["B"])])
     drafts = {"M1": [task("T1", ["A", "B"])], "M2": [task("T1", ["A"])]}

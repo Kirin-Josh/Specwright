@@ -59,8 +59,9 @@ def build_plan(
         log(f"plan: {m.id} {m.name} ({len(m.requirement_ids)} requirements)"
             + (" — fixing" if feedback else ""))
         earlier_tasks = [t for e in milestones[:i] for t in drafts.get(e.id, [])]
-        return agents.plan_milestone(m, reqs_of(m), milestones[:i], language, feedback,
-                                     earlier_tasks)
+        tasks = agents.plan_milestone(m, reqs_of(m), milestones[:i], language, feedback,
+                                      earlier_tasks)
+        return drop_foreign(m, tasks, log)
 
     # In order, so each milestone sees the tasks planned before it.
     for i, m in enumerate(milestones):
@@ -88,6 +89,22 @@ def build_plan(
                 drafts[m.id] = draft(i, notes)
 
     raise AssertionError("unreachable")
+
+
+def drop_foreign(m: MilestoneOutline, tasks: list[Task], log: Log) -> list[Task]:
+    """Strip other milestones' requirement IDs from a draft and delete tasks left with none:
+    their work belongs to another milestone. The model tends to ignore feedback asking this."""
+    own = set(m.requirement_ids)
+    kept: list[Task] = []
+    for t in tasks:
+        reqs = [rid for rid in t.requirement_ids if rid in own]
+        if reqs:
+            kept.append(t.model_copy(update={"requirement_ids": reqs}))
+    dropped = {t.id for t in tasks} - {t.id for t in kept}
+    if dropped:
+        log(f"repair: {m.id} dropped {len(dropped)} tasks citing only other milestones' requirements")
+    return [t.model_copy(update={"depends_on": [d for d in t.depends_on if d not in dropped]})
+            for t in kept]
 
 
 def ownership_issues(plan: Plan, owner: dict[str, str]) -> list[Issue]:

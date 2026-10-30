@@ -1,6 +1,6 @@
 """Deterministic plan checks — run before any LLM critique. (M3)"""
 
-from app.schemas import Issue, Plan, Requirement, ReviewReport
+from app.schemas import Issue, Label, Plan, Requirement, RequirementType, ReviewReport
 
 
 def run_checks(plan: Plan, requirements: list[Requirement]) -> ReviewReport:
@@ -28,6 +28,18 @@ def run_checks(plan: Plan, requirements: list[Requirement]) -> ReviewReport:
             issues.append(
                 Issue(kind="orphan", detail=f"depends on missing {missing}", task_ids=[t.id])
             )
+
+    # When the spec has acceptance criteria, QA tasks automate those; testing anything else
+    # belongs inside the implementation tasks, otherwise it duplicates the acceptance tests.
+    acceptance = {r.req_id for r in requirements if r.type == RequirementType.acceptance}
+    if acceptance:
+        for t in plan.tasks:
+            if t.label == Label.QA and not acceptance & set(t.requirement_ids):
+                issues.append(Issue(
+                    kind="duplicate", task_ids=[t.id],
+                    detail="QA task that verifies no acceptance criterion; remove it and keep "
+                           "its testing inside the implementation tasks",
+                ))
 
     if cycle := find_cycle(plan):
         issues.append(Issue(kind="cycle", detail=" -> ".join(cycle), task_ids=cycle))

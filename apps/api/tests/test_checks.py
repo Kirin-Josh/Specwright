@@ -27,6 +27,19 @@ def test_uncovered_requirement_flagged():
     assert kinds == ["uncovered"]
 
 
+def test_qa_task_without_acceptance_criterion_flagged():
+    qa = task("T2", ["ES-01"]).model_copy(update={"label": "QA"})
+    acceptance = qa.model_copy(update={"id": "T3", "requirement_ids": ["CA-01"]})
+    plan = Plan(milestones=M, tasks=[task("T1", ["ES-01"]), qa, acceptance])
+    reqs = [req("ES-01"), Requirement(req_id="CA-01", text="x", type="acceptance", section="s")]
+    assert [(i.kind, i.task_ids) for i in run_checks(plan, reqs).issues] == [("duplicate", ["T2"])]
+
+
+def test_qa_tasks_allowed_when_spec_has_no_acceptance_criteria():
+    qa = task("T1", ["EF-01"]).model_copy(update={"label": "QA"})
+    assert run_checks(Plan(milestones=M, tasks=[qa]), [req("EF-01")]).ok
+
+
 def test_cycle_flagged():
     plan = Plan(milestones=M, tasks=[task("T1", ["EF-01"], ["T2"]), task("T2", ["EF-01"], ["T1"])])
     assert any(i.kind == "cycle" for i in run_checks(plan, [req("EF-01")]).issues)
