@@ -14,6 +14,7 @@ from functools import cache
 from typing import Any
 
 from pydantic import BaseModel, ValidationError
+
 from app.config import settings
 
 OPENAI_COMPATIBLE = {

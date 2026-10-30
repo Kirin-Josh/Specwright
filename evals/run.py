@@ -1,11 +1,11 @@
 """Run the Extractor and Planner on every eval spec and score them against the gold lists.
 
-From the repo root, with the API's virtualenv:
+From the repo root, with the API's environment (or `npm run evals`):
 
-    apps/api/.venv/Scripts/python -m evals.run                   # extract + plan, all specs
-    apps/api/.venv/Scripts/python -m evals.run --stage extract   # extractor only (fast)
-    apps/api/.venv/Scripts/python -m evals.run --spec room-booking
-    apps/api/.venv/Scripts/python -m evals.run --save-baseline   # make these the new baseline
+    uv run --project apps/api python -m evals.run                   # extract + plan, all specs
+    uv run --project apps/api python -m evals.run --stage extract   # extractor only (fast)
+    uv run --project apps/api python -m evals.run --spec room-booking
+    uv run --project apps/api python -m evals.run --save-baseline   # make these the new baseline
 
 Specs are markdown, split into sections without docling: ingest is deterministic and slow,
 so the evals measure the prompts. Prints a markdown table to paste into the PR, plus the change
