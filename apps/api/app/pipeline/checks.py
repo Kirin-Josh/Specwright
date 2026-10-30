@@ -95,15 +95,13 @@ def find_cycle(plan: Plan) -> list[str] | None:
         for nxt in graph.get(node, []):
             if state.get(nxt) == 1:
                 return stack[stack.index(nxt):] + [nxt]
-            if nxt in graph and not state.get(nxt):
-                if found := visit(nxt):
-                    return found
+            if nxt in graph and not state.get(nxt) and (found := visit(nxt)):
+                return found
         stack.pop()
         state[node] = 2
         return None
 
     for node in graph:
-        if not state.get(node):
-            if found := visit(node):
-                return found
+        if not state.get(node) and (found := visit(node)):
+            return found
     return None

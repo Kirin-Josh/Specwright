@@ -4,15 +4,18 @@ Scores the Extractor and Planner prompts on small specs with hand-checked gold l
 Run them after every prompt change and paste the table into the PR.
 
 ```
-npm run evals                                                   # extract + plan, all specs (~5–15 min)
-apps/api/.venv/Scripts/python -m evals.run --stage extract      # extractor only (~1 min)
-apps/api/.venv/Scripts/python -m evals.run --spec room-booking  # one spec
-apps/api/.venv/Scripts/python -m evals.run --save-baseline      # make this run the new baseline
-apps/api/.venv/Scripts/python -m pytest evals                   # tests for the scorers
+npm run evals                                                      # extract + plan, all specs (~5–15 min)
+uv run --project apps/api python -m evals.run --stage extract      # extractor only (~1 min)
+uv run --project apps/api python -m evals.run --spec room-booking  # one spec
+uv run --project apps/api python -m evals.run --save-baseline      # make this run the new baseline
+uv run --project apps/api python -m pytest evals                   # tests for the scorers
 ```
 
 Uses the provider and models in `apps/api/.env`. Specs are markdown split into sections
 directly (no docling), so only the prompts are measured.
+
+In GitHub: Actions → Evals → Run workflow. It needs the `OPENROUTER_API_KEY` repository secret;
+the score table lands in the run summary and the outputs in the `eval-results` artifact.
 
 **Runs vary even at temperature 0.** On 2026-10-30, expense-tracker recall was 100% in 4 of
 5 extract runs and 87% once: the model merged two requirements and dropped one. Before
