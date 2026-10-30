@@ -12,7 +12,13 @@ export function TaskCard({ task, flagged, onClick }: Props) {
     <button
       type="button"
       onClick={onClick}
-      className={`w-full rounded-lg border bg-white p-3 text-left shadow-sm transition hover:shadow dark:bg-zinc-900 ${
+      draggable
+      onDragStart={(e) => {
+        e.dataTransfer.setData("text/plain", task.id);
+        e.dataTransfer.effectAllowed = "move";
+      }}
+      title="Click to edit · drag to another milestone"
+      className={`w-full cursor-grab rounded-lg border bg-white p-3 text-left shadow-sm transition hover:shadow active:cursor-grabbing dark:bg-zinc-900 ${
         flagged ? "border-amber-400" : "border-zinc-200 dark:border-zinc-800"
       }`}
     >

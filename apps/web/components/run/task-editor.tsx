@@ -6,10 +6,14 @@ import type { Label, Milestone, Requirement, Task } from "@/lib/types";
 
 interface Props {
   task: Task;
+  tasks: Task[];
   milestones: Milestone[];
   requirements: Requirement[];
   onSave: (task: Task) => void;
   onDelete: (id: string) => void;
+  // Split and merge apply the draft first, so unsaved edits are kept.
+  onSplit: (task: Task) => void;
+  onMerge: (task: Task, removeId: string) => void;
   onClose: () => void;
 }
 
@@ -18,16 +22,20 @@ const input =
 
 export function TaskEditor({
   task,
+  tasks,
   milestones,
   requirements,
   onSave,
   onDelete,
+  onSplit,
+  onMerge,
   onClose,
 }: Props) {
   const dialogRef = useRef<HTMLDialogElement>(null);
   // Edit a local copy; the plan only changes when the user clicks Save.
   const [draft, setDraft] = useState<Task>(task);
   const [depsText, setDepsText] = useState(task.depends_on.join(", "));
+  const [mergeId, setMergeId] = useState("");
 
   useEffect(() => {
     dialogRef.current?.showModal();
@@ -46,13 +54,17 @@ export function TaskEditor({
     );
   }
 
-  function handleSave(e: React.FormEvent) {
-    e.preventDefault();
+  function current(): Task {
     const depends_on = depsText
       .split(",")
       .map((s) => s.trim())
       .filter(Boolean);
-    onSave({ ...draft, depends_on });
+    return { ...draft, depends_on };
+  }
+
+  function handleSave(e: React.FormEvent) {
+    e.preventDefault();
+    onSave(current());
   }
 
   return (
@@ -181,6 +193,42 @@ export function TaskEditor({
             onChange={(e) => setDepsText(e.target.value)}
           />
         </label>
+
+        <div className="flex flex-wrap items-center gap-2 rounded-md bg-zinc-50 p-2 text-sm dark:bg-zinc-950">
+          <button
+            type="button"
+            onClick={() => onSplit(current())}
+            title="Make a second task with the same requirements; points are shared between the two"
+            className="rounded-md border border-zinc-300 px-2.5 py-1 dark:border-zinc-700"
+          >
+            Split in two
+          </button>
+          <span className="ml-auto text-zinc-500">Merge into this:</span>
+          <select
+            className="rounded-md border border-zinc-300 bg-white px-2 py-1 dark:border-zinc-700 dark:bg-zinc-900"
+            value={mergeId}
+            onChange={(e) => setMergeId(e.target.value)}
+            aria-label="Task to merge into this one"
+          >
+            <option value="">Choose a task…</option>
+            {tasks
+              .filter((t) => t.id !== task.id)
+              .map((t) => (
+                <option key={t.id} value={t.id}>
+                  {t.id} · {t.title}
+                </option>
+              ))}
+          </select>
+          <button
+            type="button"
+            disabled={!mergeId}
+            onClick={() => onMerge(current(), mergeId)}
+            title="Adds its requirements, dependencies, points and description to this task, then removes it"
+            className="rounded-md border border-zinc-300 px-2.5 py-1 disabled:opacity-40 dark:border-zinc-700"
+          >
+            Merge
+          </button>
+        </div>
 
         <div className="flex items-center gap-2 pt-2">
           <button
