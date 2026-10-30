@@ -10,3 +10,4 @@ __pycache__/
 *.env
 
 LEARNERS.md
+apps/api/runs/

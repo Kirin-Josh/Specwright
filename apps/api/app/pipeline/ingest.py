@@ -27,6 +27,25 @@ def split_sections(markdown: str) -> list[SpecSection]:
     return [s for s in sections if s.markdown]
 
 
+def chunk_sections(doc: SpecDocument, max_chars: int) -> list[SpecDocument]:
+    """Group whole sections into documents of at most ~max_chars; 0 keeps one document."""
+    if max_chars <= 0:
+        return [doc]
+    chunks: list[SpecDocument] = []
+    current: list[SpecSection] = []
+    size = 0
+    for s in doc.sections:
+        n = len(s.heading) + len(s.markdown)
+        if current and size + n > max_chars:
+            chunks.append(doc.model_copy(update={"sections": current}))
+            current, size = [], 0
+        current.append(s)
+        size += n
+    if current:
+        chunks.append(doc.model_copy(update={"sections": current}))
+    return chunks
+
+
 def to_prompt_text(doc: SpecDocument) -> str:
     body = "\n\n".join(f"## {s.heading}\n{s.markdown}" for s in doc.sections)
     return f"<spec title=\"{doc.title}\">\n{body}\n</spec>"
