@@ -70,3 +70,27 @@ class ReviewReport(BaseModel):
     @property
     def ok(self) -> bool:
         return not self.issues
+
+
+class SyncItem(BaseModel):
+    kind: str = Field(description="label | project | milestone | issue | relation")
+    title: str
+    action: str = Field(description="create | update")
+
+
+class SyncResult(BaseModel):
+    created: int
+    updated: int
+    project_url: str
+
+
+class SyncMap(BaseModel):
+    """Linear IDs of everything already pushed for one run; looked up before any create."""
+
+    team_id: str = ""
+    project_id: str = ""
+    project_url: str = ""
+    labels: dict[str, str] = {}
+    milestones: dict[str, str] = {}  # plan milestone ID -> Linear project milestone ID
+    issues: dict[str, str] = {}  # task ID -> Linear issue ID
+    relations: list[tuple[str, str]] = []  # (blocking task ID, blocked task ID)
