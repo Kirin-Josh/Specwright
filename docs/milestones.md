@@ -4,13 +4,13 @@ Work one milestone at a time. Commit and clear context between milestones.
 
 ## M0 — Setup (2–3 days)
 - [x] Monorepo, Next.js app, FastAPI app, CLAUDE.md, docs
-- [ ] Appwrite project: auth, `specs` bucket, collections from the data model
-  (runs are stored as local files under `apps/api/runs/` until then)
-- [ ] ARQ worker + Redis via docker-compose
+- [x] Appwrite project: `specs` bucket, `runs` and `outputs` tables (`RUN_STORE=appwrite`)
+- [ ] Sign-in and run ownership — later, once other people use the app
+- [ ] ARQ worker + Redis — deferred (needs Docker); runs use FastAPI background tasks
 - [x] `.env` filled, `/health` green
 
 ## M1 — Ingest + Extractor
-- [x] Upload endpoint (local files; Appwrite storage comes with M0)
+- [x] Upload endpoint → Appwrite storage (or local files)
 - [x] `ingest.py` with docling (docx + pdf, tables kept)
 - [x] `extractor.py` returns `list[Requirement]` via forced tool use
 - [x] Web: upload page + requirements table

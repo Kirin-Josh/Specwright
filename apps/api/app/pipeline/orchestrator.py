@@ -192,8 +192,8 @@ def assemble(
         for t in drafts[m.id]:
             n += 1
             local_to_global[t.id] = f"T-{n:03d}"
-        def to_global(text: str) -> str:
-            return re.sub(r"\bT\d+\b", lambda x: local_to_global.get(x.group(0), x.group(0)), text)
+        def to_global(text: str, ids: dict[str, str] = local_to_global) -> str:
+            return re.sub(r"\bT\d+\b", lambda x: ids.get(x.group(0), x.group(0)), text)
 
         for t in drafts[m.id]:
             gid = local_to_global[t.id]

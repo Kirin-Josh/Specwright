@@ -1,0 +1,49 @@
+# Runs the prompt evals on demand (Actions → Evals → Run workflow). Needs the repository secret
+# OPENROUTER_API_KEY. Models can be changed with repository variables SPECWRIGHT_MODEL_*.
+name: Evals
+
+on:
+  workflow_dispatch:
+    inputs:
+      stage:
+        description: Stop after this stage
+        type: choice
+        options: [plan, extract]
+        default: plan
+      spec:
+        description: Only this spec (gold file name), empty for all
+        required: false
+
+jobs:
+  evals:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    env:
+      LLM_PROVIDER: openrouter
+      OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
+      SPECWRIGHT_MODEL_EXTRACT: ${{ vars.SPECWRIGHT_MODEL_EXTRACT || 'openai/gpt-oss-120b' }}
+      SPECWRIGHT_MODEL_PLAN: ${{ vars.SPECWRIGHT_MODEL_PLAN || 'openai/gpt-oss-120b' }}
+      SPECWRIGHT_MODEL_REVIEW: ${{ vars.SPECWRIGHT_MODEL_REVIEW || 'openai/gpt-oss-120b' }}
+      SPECWRIGHT_EXTRACT_CHUNK_CHARS: "0"
+    steps:
+      - uses: actions/checkout@v5
+      - uses: astral-sh/setup-uv@v6
+        with:
+          python-version: "3.14"
+          enable-cache: true
+          cache-dependency-glob: apps/api/uv.lock
+      - run: uv sync --locked --directory apps/api
+      - name: Run evals
+        env:
+          STAGE: ${{ inputs.stage }}
+          SPEC: ${{ inputs.spec }}
+        run: |
+          args=(--stage "$STAGE")
+          if [ -n "$SPEC" ]; then args+=(--spec "$SPEC"); fi
+          uv run --project apps/api python -m evals.run "${args[@]}" | tee evals-output.md
+          { echo '## Eval scores'; echo; sed -n '/^| spec/,$p' evals-output.md; } >> "$GITHUB_STEP_SUMMARY"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: eval-results
+          path: evals/results/

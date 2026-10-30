@@ -1,0 +1,48 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  api:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: apps/api
+    steps:
+      - uses: actions/checkout@v5
+      - uses: astral-sh/setup-uv@v6
+        with:
+          python-version: "3.14"
+          enable-cache: true
+          cache-dependency-glob: apps/api/uv.lock
+      - run: uv sync --locked
+      - name: Ruff
+        run: uv run ruff check .
+      - name: Pyright
+        run: uv run pyright app tests
+      - name: Tests
+        run: uv run pytest
+      # From the repo root, where `evals` is importable and ruff sorts its imports the same way.
+      - name: Evals lint and scorer tests
+        working-directory: .
+        run: |
+          uv run --project apps/api ruff check --config apps/api/pyproject.toml evals
+          uv run --project apps/api python -m pytest evals
+
+  web:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Lint
+        run: npm run lint
+      # next build generates the route types (PageProps…) and then type-checks.
+      - name: Build and type check
+        run: npm run build
