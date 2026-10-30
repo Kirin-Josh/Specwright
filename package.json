@@ -12,7 +12,8 @@
     "lint": "npm run lint -w apps/web",
     "test:api": "uv run --directory apps/api pytest",
     "setup:api": "uv sync --directory apps/api",
-    "redis": "docker compose up -d redis"
+    "redis": "docker compose up -d redis",
+    "evals": "uv run --directory apps/api python -m evals.run"
   },
   "devDependencies": {
     "concurrently": "^9.0.0"

@@ -1,0 +1,61 @@
+{
+  "model": "openrouter \u00b7 extract openai/gpt-oss-120b \u00b7 plan openai/gpt-oss-120b",
+  "results": {
+    "expense-tracker": {
+      "requirements": 15,
+      "recall": 1.0,
+      "missed": [],
+      "extra": [],
+      "scope_leaks": [],
+      "wrong_type": [],
+      "bad_ids": [],
+      "duplicate_ids": [],
+      "extract": {
+        "tokens": 3442,
+        "cost_usd": 0.0004,
+        "invalid_answers": 0,
+        "seconds": 34.4
+      },
+      "milestones": 4,
+      "tasks": 27,
+      "points": 119,
+      "coverage": 1.0,
+      "open_issues": 1,
+      "duplicate_titles": 0,
+      "plan": {
+        "tokens": 42515,
+        "cost_usd": 0.004,
+        "invalid_answers": 0,
+        "seconds": 454.3
+      }
+    },
+    "room-booking": {
+      "requirements": 18,
+      "recall": 1.0,
+      "missed": [],
+      "extra": [],
+      "scope_leaks": [],
+      "wrong_type": [],
+      "bad_ids": [],
+      "duplicate_ids": [],
+      "extract": {
+        "tokens": 3510,
+        "cost_usd": 0.0003,
+        "invalid_answers": 0,
+        "seconds": 29.7
+      },
+      "milestones": 4,
+      "tasks": 25,
+      "points": 105,
+      "coverage": 1.0,
+      "open_issues": 0,
+      "duplicate_titles": 0,
+      "plan": {
+        "tokens": 27458,
+        "cost_usd": 0.0027,
+        "invalid_answers": 1,
+        "seconds": 291.7
+      }
+    }
+  }
+}

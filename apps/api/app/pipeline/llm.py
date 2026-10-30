@@ -9,6 +9,7 @@ Providers (set LLM_PROVIDER in .env):
 
 import json
 import re
+from dataclasses import dataclass
 from functools import cache
 from typing import Any
 
@@ -22,6 +23,27 @@ OPENAI_COMPATIBLE = {
 }
 
 REQUEST_TIMEOUT = 180  # seconds per model call; long plans take ~1–2 minutes
+
+
+@dataclass
+class Usage:
+    """Running totals since the last reset; the evals read them per stage."""
+
+    calls: int = 0
+    input_tokens: int = 0
+    output_tokens: int = 0
+    invalid: int = 0  # answers that failed validation and were asked again
+    cost_usd: float = 0.0  # only providers that report it (OpenRouter)
+
+
+usage = Usage()
+
+
+def _record(input_tokens: int, output_tokens: int, cost: float | None = None) -> None:
+    usage.calls += 1
+    usage.input_tokens += input_tokens
+    usage.output_tokens += output_tokens
+    usage.cost_usd += cost or 0.0
 
 
 class LLMError(RuntimeError):
@@ -59,6 +81,7 @@ def structured_call[T: BaseModel](
                                               output.__name__, max_tokens)
             return output.model_validate(raw)
         except (ValidationError, InvalidOutput) as exc:
+            usage.invalid += 1
             if attempt == max_attempts:
                 raise LLMError(f"{model} returned invalid {output.__name__}: {exc}") from exc
             # Feed the error back so the model can fix its own output.
@@ -101,6 +124,9 @@ def _call_openai_compatible(model, system, prompt, schema, tool_name, type_name,
         if "tool_use_failed" in str(exc):
             raise InvalidOutput("tool call arguments were not valid JSON") from exc
         raise
+    if response.usage:
+        _record(response.usage.prompt_tokens, response.usage.completion_tokens,
+                getattr(response.usage, "cost", None))
     choice = response.choices[0]
     if choice.finish_reason == "length":
         raise InvalidOutput(f"output was cut off at max_tokens={max_tokens}")
@@ -164,6 +190,9 @@ def _call_anthropic(model, system, spec_text, instruction, schema, tool_name, ty
             ],
         }],
     )
+    u = response.usage
+    _record(u.input_tokens + (u.cache_read_input_tokens or 0)
+            + (u.cache_creation_input_tokens or 0), u.output_tokens)
     if response.stop_reason == "max_tokens":
         raise InvalidOutput(f"output was cut off at max_tokens={max_tokens}")
     block = next(b for b in response.content if b.type == "tool_use")

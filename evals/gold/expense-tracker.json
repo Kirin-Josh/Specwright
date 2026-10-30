@@ -1,0 +1,207 @@
+{
+  "spec": "expense-tracker.md",
+  "requirements": [
+    {
+      "name": "claim lines with receipt",
+      "type": "functional",
+      "match": [
+        [
+          "line"
+        ],
+        [
+          "categor"
+        ],
+        [
+          "receipt"
+        ]
+      ]
+    },
+    {
+      "name": "currency conversion at ECB rate",
+      "type": "functional",
+      "match": [
+        [
+          "ecb",
+          "central bank"
+        ]
+      ]
+    },
+    {
+      "name": "save as draft",
+      "type": "functional",
+      "match": [
+        [
+          "draft"
+        ]
+      ]
+    },
+    {
+      "name": "locked after submit unless sent back",
+      "type": "functional",
+      "match": [
+        [
+          "no longer",
+          "cannot",
+          "can't",
+          "locked",
+          "read-only",
+          "not be edited",
+          "not editable"
+        ],
+        [
+          "edit"
+        ]
+      ]
+    },
+    {
+      "name": "manager approves, rejects or sends back",
+      "type": "functional",
+      "match": [
+        [
+          "manager"
+        ],
+        [
+          "reject"
+        ]
+      ]
+    },
+    {
+      "name": "second finance approval above 1,000 EUR",
+      "type": "functional",
+      "match": [
+        [
+          "1,000",
+          "1000",
+          "1 000"
+        ]
+      ]
+    },
+    {
+      "name": "email on status change",
+      "type": "functional",
+      "match": [
+        [
+          "email",
+          "e-mail",
+          "notif"
+        ],
+        [
+          "status"
+        ]
+      ]
+    },
+    {
+      "name": "weekly CSV export marks claims paid",
+      "type": "functional",
+      "match": [
+        [
+          "csv"
+        ],
+        [
+          "paid"
+        ]
+      ]
+    },
+    {
+      "name": "meal policy limit flag",
+      "type": "functional",
+      "match": [
+        [
+          "meal"
+        ],
+        [
+          "60"
+        ]
+      ]
+    },
+    {
+      "name": "receipts encrypted and access-restricted",
+      "type": "security",
+      "match": [
+        [
+          "encrypt"
+        ]
+      ]
+    },
+    {
+      "name": "Microsoft 365 sign-in",
+      "type": "security",
+      "match": [
+        [
+          "microsoft",
+          "365",
+          "entra",
+          "azure ad"
+        ]
+      ]
+    },
+    {
+      "name": "works on a phone browser",
+      "type": "technical",
+      "match": [
+        [
+          "phone",
+          "mobile"
+        ],
+        [
+          "browser",
+          "responsive"
+        ]
+      ]
+    },
+    {
+      "name": "dollar receipt converted (acceptance)",
+      "type": "acceptance",
+      "match": [
+        [
+          "dollar",
+          "usd",
+          "us$"
+        ]
+      ]
+    },
+    {
+      "name": "1,500 EUR claim waits for finance (acceptance)",
+      "type": "acceptance",
+      "match": [
+        [
+          "1,500",
+          "1500",
+          "1 500"
+        ]
+      ]
+    },
+    {
+      "name": "Friday export imports cleanly, claims paid (acceptance)",
+      "type": "acceptance",
+      "match": [
+        [
+          "accounting"
+        ],
+        [
+          "paid"
+        ],
+        [
+          "export"
+        ]
+      ]
+    }
+  ],
+  "out_of_scope_match": [
+    [
+      [
+        "ocr"
+      ]
+    ],
+    [
+      [
+        "bank transfer"
+      ]
+    ],
+    [
+      [
+        "credit card"
+      ]
+    ]
+  ]
+}

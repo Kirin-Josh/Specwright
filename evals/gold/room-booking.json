@@ -1,0 +1,82 @@
+{
+  "spec": "room-booking.md",
+  "requirements": [
+    {
+      "req_id": "FR-01",
+      "type": "functional"
+    },
+    {
+      "req_id": "FR-02",
+      "type": "functional"
+    },
+    {
+      "req_id": "FR-03",
+      "type": "functional"
+    },
+    {
+      "req_id": "FR-04",
+      "type": "functional"
+    },
+    {
+      "req_id": "FR-05",
+      "type": "functional"
+    },
+    {
+      "req_id": "FR-06",
+      "type": "functional"
+    },
+    {
+      "req_id": "FR-07",
+      "type": "functional"
+    },
+    {
+      "req_id": "FR-08",
+      "type": "functional"
+    },
+    {
+      "req_id": "SEC-01",
+      "type": "security"
+    },
+    {
+      "req_id": "SEC-02",
+      "type": "security"
+    },
+    {
+      "req_id": "SEC-03",
+      "type": "security"
+    },
+    {
+      "req_id": "TECH-01",
+      "type": "technical"
+    },
+    {
+      "req_id": "TECH-02",
+      "type": "technical"
+    },
+    {
+      "req_id": "TECH-03",
+      "type": "technical"
+    },
+    {
+      "req_id": "AC-01",
+      "type": "acceptance"
+    },
+    {
+      "req_id": "AC-02",
+      "type": "acceptance"
+    },
+    {
+      "req_id": "AC-03",
+      "type": "acceptance"
+    },
+    {
+      "req_id": "AC-04",
+      "type": "acceptance"
+    }
+  ],
+  "out_of_scope": [
+    "OOS-01",
+    "OOS-02",
+    "OOS-03"
+  ]
+}
