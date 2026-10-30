@@ -1,14 +1,14 @@
 from app.pipeline.checks import run_checks
-from app.schemas import Milestone, Plan, Requirement, Task
+from app.schemas import Label, Milestone, Plan, Requirement, RequirementType, Task
 
 
 def req(rid: str) -> Requirement:
-    return Requirement(req_id=rid, text="x", type="functional", section="s")
+    return Requirement(req_id=rid, text="x", type=RequirementType.functional, section="s")
 
 
 def task(tid: str, reqs: list[str], deps: list[str] | None = None) -> Task:
     return Task(
-        id=tid, milestone_id="M1", title=tid, description="d", label="BE",
+        id=tid, milestone_id="M1", title=tid, description="d", label=Label.BE,
         estimate=2, priority=2, requirement_ids=reqs, depends_on=deps or [],
     )
 
@@ -31,7 +31,8 @@ def test_qa_task_without_acceptance_criterion_flagged():
     qa = task("T2", ["ES-01"], ["T1"]).model_copy(update={"label": "QA"})
     acceptance = qa.model_copy(update={"id": "T3", "requirement_ids": ["CA-01"]})
     plan = Plan(milestones=M, tasks=[task("T1", ["ES-01"]), qa, acceptance])
-    reqs = [req("ES-01"), Requirement(req_id="CA-01", text="x", type="acceptance", section="s")]
+    criterion = Requirement(req_id="CA-01", text="x", type=RequirementType.acceptance, section="s")
+    reqs = [req("ES-01"), criterion]
     assert [(i.kind, i.task_ids) for i in run_checks(plan, reqs).issues] == [("duplicate", ["T2"])]
 
 

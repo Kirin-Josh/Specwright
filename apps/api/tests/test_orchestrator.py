@@ -1,15 +1,15 @@
 from app.pipeline import orchestrator
 from app.pipeline.agents import MilestoneOutline, Outline
-from app.schemas import Requirement, Task
+from app.schemas import Label, Requirement, RequirementType, Task
 
 
 def req(rid: str) -> Requirement:
-    return Requirement(req_id=rid, text="x", type="functional", section="s")
+    return Requirement(req_id=rid, text="x", type=RequirementType.functional, section="s")
 
 
 def task(tid: str, reqs: list[str], deps: list[str] | None = None) -> Task:
     return Task(
-        id=tid, milestone_id="?", title=tid, description="d", label="BE",
+        id=tid, milestone_id="?", title=tid, description="d", label=Label.BE,
         estimate=2, priority=2, requirement_ids=reqs, depends_on=deps or [],
     )
 
@@ -63,8 +63,8 @@ def test_only_milestones_with_issues_are_replanned(monkeypatch):
 def test_acceptance_criterion_is_moved_after_what_it_verifies(monkeypatch):
     early = Outline(milestones=[milestone("M1", ["EF-01", "CA-01"]), milestone("M2", ["EF-02"])])
     monkeypatch.setattr(orchestrator.agents, "outline", lambda *a: early.model_copy(deep=True))
-    criterion = Requirement(req_id="CA-01", text="Covers: EF-01, EF-02.", type="acceptance",
-                            section="s")
+    criterion = Requirement(req_id="CA-01", text="Covers: EF-01, EF-02.",
+                            type=RequirementType.acceptance, section="s")
     result = orchestrator.make_outline([req("EF-01"), req("EF-02"), criterion], "en",
                                        log=lambda _: None)
     assert [m.requirement_ids for m in result.milestones] == [["EF-01"], ["EF-02", "CA-01"]]
