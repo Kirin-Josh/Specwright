@@ -2,7 +2,8 @@
 
 export type Language = "en" | "fr";
 export type Label = "BE" | "FE" | "QA";
-export type RequirementType = "functional" | "security" | "technical" | "acceptance";
+export type RequirementType =
+  "functional" | "security" | "technical" | "acceptance";
 
 export interface Requirement {
   req_id: string;
@@ -34,7 +35,14 @@ export interface Plan {
   tasks: Task[];
 }
 
-export type IssueKind = "uncovered" | "orphan" | "cycle" | "estimate" | "duplicate" | "vague";
+export type IssueKind =
+  | "uncovered"
+  | "orphan"
+  | "cycle"
+  | "dependency"
+  | "estimate"
+  | "duplicate"
+  | "vague";
 
 export interface ReviewIssue {
   kind: IssueKind;
@@ -43,7 +51,13 @@ export interface ReviewIssue {
   requirement_ids: string[];
 }
 
-export const STAGES = ["ingesting", "extracting", "planning", "reviewing", "reviewed"] as const;
+export const STAGES = [
+  "ingesting",
+  "extracting",
+  "planning",
+  "reviewing",
+  "reviewed",
+] as const;
 export type Stage = (typeof STAGES)[number] | "failed";
 
 export interface Run {
@@ -51,6 +65,7 @@ export interface Run {
   spec_title: string;
   language: Language;
   stage: Stage;
+  message: string; // latest progress line, or the error when the run failed
   requirements: Requirement[];
   plan: Plan | null;
   issues: ReviewIssue[];
@@ -62,7 +77,7 @@ export interface RunEvent {
 }
 
 export interface SyncItem {
-  kind: "label" | "project" | "milestone" | "issue";
+  kind: "label" | "project" | "milestone" | "issue" | "relation";
   title: string;
   action: "create" | "update";
 }
