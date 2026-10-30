@@ -12,7 +12,7 @@ jobs:
       run:
         working-directory: apps/api
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - uses: astral-sh/setup-uv@v6
         with:
           python-version: "3.14"
@@ -35,15 +35,14 @@ jobs:
   web:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
         with:
           node-version: 22
           cache: npm
       - run: npm ci
       - name: Lint
         run: npm run lint
-      - name: Type check
-        run: npx tsc --noEmit -p apps/web
-      - name: Build
+      # next build generates the route types (PageProps…) and then type-checks.
+      - name: Build and type check
         run: npm run build
