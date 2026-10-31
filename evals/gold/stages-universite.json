@@ -1,0 +1,99 @@
+{
+  "spec": "stages-universite.md",
+  "language": "fr",
+  "requirements": [
+    {
+      "req_id": "EF-01",
+      "type": "functional"
+    },
+    {
+      "req_id": "EF-02",
+      "type": "functional"
+    },
+    {
+      "req_id": "EF-03",
+      "type": "functional"
+    },
+    {
+      "req_id": "EF-04",
+      "type": "functional"
+    },
+    {
+      "req_id": "EF-05",
+      "type": "functional"
+    },
+    {
+      "req_id": "EF-06",
+      "type": "functional"
+    },
+    {
+      "req_id": "EF-07",
+      "type": "functional"
+    },
+    {
+      "req_id": "ES-01",
+      "type": "security"
+    },
+    {
+      "req_id": "ES-02",
+      "type": "security"
+    },
+    {
+      "req_id": "ES-03",
+      "type": "security"
+    },
+    {
+      "req_id": "ET-01",
+      "type": "technical"
+    },
+    {
+      "req_id": "ET-02",
+      "type": "technical"
+    },
+    {
+      "req_id": "CA-01",
+      "type": "acceptance"
+    },
+    {
+      "req_id": "CA-02",
+      "type": "acceptance"
+    },
+    {
+      "req_id": "CA-03",
+      "type": "acceptance"
+    },
+    {
+      "req_id": "CA-04",
+      "type": "acceptance"
+    },
+    {
+      "name": "interface in French and English (unnumbered)",
+      "type": "technical",
+      "match": [
+        [
+          "anglais",
+          "english"
+        ]
+      ]
+    }
+  ],
+  "out_of_scope_match": [
+    [
+      [
+        "électronique",
+        "electronique"
+      ]
+    ],
+    [
+      [
+        "gratification"
+      ]
+    ],
+    [
+      [
+        "native",
+        "natif"
+      ]
+    ]
+  ]
+}

@@ -52,3 +52,20 @@ def test_plan_scores():
                 tasks=[task("T1", "Login API", "FR-01"), task("T2", "login api!", "FR-01")])
     s = score_plan(plan, ReviewReport(issues=[]), [req("FR-01"), req("FR-02")])
     assert (s["tasks"], s["points"], s["coverage"], s["duplicate_titles"]) == (2, 6, 0.5, 2)
+
+
+def test_english_titles_only_counted_for_french_plans():
+    def task(tid: str, title: str) -> Task:
+        return Task(id=tid, milestone_id="M1", title=title, description="", label=Label.BE,
+                    estimate=2, priority=3, requirement_ids=["EF-01"])
+
+    plan = Plan(milestones=[Milestone(id="M1", name="m", goal="g")], tasks=[
+        task("T-001", "Créer la demande de stage"),
+        task("T-002", "Create the internship request form"),
+        task("T-003", "Envoyer les courriels de changement de statut"),
+        task("T-004", "Upload de la convention"),  # loanword, not English
+        task("T-005", "Deploy the app"),
+    ])
+    review = ReviewReport(issues=[])
+    assert score_plan(plan, review, [req("EF-01")], "fr")["english_titles"] == ["T-002", "T-005"]
+    assert score_plan(plan, review, [req("EF-01")])["english_titles"] is None
